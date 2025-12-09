@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 import random
 import time
 
@@ -10,32 +11,40 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- 1. CUSTOM CONFETTI GENERATOR ---
-# This function creates 100 small HTML divs with random colors and trajectories
-# that explode upwards, simulating a party popper.
-def trigger_party_confetti():
-    confetti_html = ""
-    colors = ['#ff0000', '#0000ff', '#ffff00', '#00ff00', '#ff00ff'] # Party colors
-    
-    for i in range(100): # Generate 100 pieces
-        left_pos = random.randint(0, 100)
-        anim_delay = random.uniform(0, 0.5)
-        color = random.choice(colors)
-        # Randomize rotation direction
-        rot = random.randint(-720, 720)
-        
-        confetti_html += f"""
-        <div class="confetti" style="
-            left: {left_pos}vw; 
-            animation-delay: {anim_delay}s; 
-            background-color: {color};
-            --rot-end: {rot}deg;">
-        </div>
+# --- 1. STABLE CONFETTI ENGINE (JAVASCRIPT) ---
+def trigger_party_mode():
+    # This injects a professional "Party Popper" animation script
+    # It is invisible and will not cause text glitches
+    components.html(
         """
-    
-    # Inject the HTML blob
-    st.markdown(f"<div>{confetti_html}</div>", unsafe_allow_html=True)
+        <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+        <script>
+            // Party Popper Effect
+            var duration = 3 * 1000;
+            var animationEnd = Date.now() + duration;
+            var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 9999 };
 
+            function randomInOut(min, max) {
+              return Math.random() * (max - min) + min;
+            }
+
+            var interval = setInterval(function() {
+              var timeLeft = animationEnd - Date.now();
+
+              if (timeLeft <= 0) {
+                return clearInterval(interval);
+              }
+
+              var particleCount = 50 * (timeLeft / duration);
+              // Since particles fall down, start a bit higher than random
+              confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInOut(0.1, 0.3), y: Math.random() - 0.2 } }));
+              confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInOut(0.7, 0.9), y: Math.random() - 0.2 } }));
+            }, 250);
+        </script>
+        """,
+        height=0, # Keeps it invisible in layout
+        width=0
+    )
 
 # --- 2. SOUND ENGINE ---
 def play_sound(sound_type):
@@ -53,39 +62,10 @@ def play_sound(sound_type):
             </audio>
             """, unsafe_allow_html=True)
 
-# --- 3. CSS STYLING (WITH NEW ANIMATIONS) ---
+# --- 3. CSS STYLING ---
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@500;700&display=swap');
-
-    /* --- CUSTOM PARTY CONFETTI ANIMATION --- */
-    .confetti {
-        position: fixed;
-        bottom: -10px; /* Start just off-screen bottom */
-        width: 10px;
-        height: 20px; /* Rectangular streamer shape */
-        opacity: 1;
-        z-index: 9999;
-        pointer-events: none; /* Let clicks pass through */
-        animation: explode-up 2.5s ease-out forwards;
-    }
-
-    @keyframes explode-up {
-        0% {
-            transform: translateY(0) rotate(0deg);
-            opacity: 1;
-        }
-        80% {
-             opacity: 1;
-        }
-        100% {
-            /* Move up 80% of screen height and rotate */
-            transform: translateY(-80vh) rotate(var(--rot-end));
-            opacity: 0; /* Fade out at top */
-        }
-    }
-    /* --------------------------------------- */
-
 
     /* BACKGROUND */
     .stApp {
@@ -168,7 +148,7 @@ if 'sound' not in st.session_state: st.session_state.sound = None
 if 'mode' not in st.session_state: st.session_state.mode = "EXPLORATION"
 if 'max_val' not in st.session_state: st.session_state.max_val = 100
 if 'sound_on' not in st.session_state: st.session_state.sound_on = True
-if 'trigger_confetti' not in st.session_state: st.session_state.trigger_confetti = False
+if 'trigger_party' not in st.session_state: st.session_state.trigger_party = False
 
 # --- 5. LOGIC ---
 def start_game(mode):
@@ -186,7 +166,7 @@ def start_game(mode):
     st.session_state.color = "#00f0ff"
     st.session_state.intel_txt = ""
     st.session_state.sound = "start"
-    st.session_state.trigger_confetti = False
+    st.session_state.trigger_party = False
 
 def get_feedback(guess, target):
     diff = abs(target - guess)
@@ -204,8 +184,7 @@ def scan(guess):
         st.session_state.msg_sub = f"TARGET LOCKED: {st.session_state.target} // EXCELLENT WORK"
         st.session_state.color = "#39ff14"
         st.session_state.sound = "win"
-        # TRIGGER CUSTOM CONFETTI
-        st.session_state.trigger_confetti = True
+        st.session_state.trigger_party = True # Trigger JavaScript Confetti
         return
 
     # Delay only on non-wins
@@ -235,7 +214,7 @@ def scan(guess):
     st.session_state.msg_main = main
     st.session_state.msg_sub = sub
     st.session_state.color = col
-    # No sound on normal scans per request
+    # No scan sound requested, only win/error
 
 def buy_intel():
     if st.session_state.fuel >= 10:
@@ -260,11 +239,16 @@ with st.sidebar:
         st.session_state.game_active = False
         st.session_state.sound = "start"
         st.rerun()
-    st.markdown("### 📝 MISSION BRIEF")
+
+    st.markdown("### 📝 MISSION INSTRUCTIONS")
     st.info("""
-    * **Objective:** Find the hidden number.
-    * **Hot/Cold:** Guides you closer.
-    * **Win:** Get "Target Unlocked!"
+    1. **Objective:** Find the hidden number.
+    2. **Scan Frequencies:** Use the slider or keypad to guess.
+    3. **Interpret Signals:**
+       - 🔴 **Hot:** You are very close!
+       - 🔵 **Cold:** You are far away.
+    4. **Watch Fuel:** Each scan costs 2% fuel.
+    5. **Win:** Unlock the target before fuel runs out!
     """)
 
 # MAIN SCREEN
@@ -272,10 +256,10 @@ if st.session_state.sound:
     play_sound(st.session_state.sound)
     st.session_state.sound = None
 
-# --- CONFETTI TRIGGER ---
-if st.session_state.trigger_confetti:
-    trigger_party_confetti()
-    st.session_state.trigger_confetti = False # Run once
+# PARTY POPPER TRIGGER
+if st.session_state.trigger_party:
+    trigger_party_mode()
+    st.session_state.trigger_party = False
 
 st.markdown("<h1 style='text-align:center; color:#00f0ff;'>COSMIC COMMAND</h1>", unsafe_allow_html=True)
 
@@ -310,6 +294,7 @@ else:
 
     if st.session_state.fuel > 0 and "RIGHT" not in st.session_state.msg_main:
         st.write("---")
+        
         c_tog1, c_tog2 = st.columns(2)
         if c_tog1.button("🎚️ SLIDER"): st.session_state.input_type = "SLIDER"
         if c_tog2.button("⌨️ KEYPAD"): st.session_state.input_type = "KEYPAD"
