@@ -51,7 +51,7 @@ def play_sound(sound_type):
             </audio>
             """, unsafe_allow_html=True)
 
-# --- 3. CSS STYLING (SLIDER CSS REMOVED) ---
+# --- 3. CSS STYLING (SAFE MODE) ---
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@500;700&display=swap');
@@ -74,7 +74,7 @@ st.markdown("""
     h1, h2, h3 { font-family: 'Orbitron', sans-serif !important; text-shadow: 0 0 10px rgba(0, 240, 255, 0.6); }
     div, p, button, span, li { font-family: 'Rajdhani', sans-serif !important; font-weight: 700; letter-spacing: 1px; }
 
-    /* FIX FOR ICONS (Prevents "keyboard_arrow_right" glitch) */
+    /* ICON FIX */
     .material-icons, .st-emotion-cache-1pbqdg3, .st-emotion-cache-10trblm, i {
         font-family: sans-serif !important; 
     }
@@ -132,7 +132,6 @@ if 'fuel' not in st.session_state: st.session_state.fuel = 100
 if 'msg_main' not in st.session_state: st.session_state.msg_main = "SYSTEM ONLINE"
 if 'msg_sub' not in st.session_state: st.session_state.msg_sub = "READY TO START"
 if 'color' not in st.session_state: st.session_state.color = "#00f0ff"
-if 'input_type' not in st.session_state: st.session_state.input_type = "SLIDER"
 if 'intel_txt' not in st.session_state: st.session_state.intel_txt = ""
 if 'sound' not in st.session_state: st.session_state.sound = None
 if 'mode' not in st.session_state: st.session_state.mode = "EXPLORATION"
@@ -177,16 +176,13 @@ def scan(guess):
         st.session_state.trigger_party = True
         return
 
-    # Delay only on non-wins
     with st.spinner("ANALYZING..."):
         time.sleep(0.15) 
 
-    # Low Cost Scanning
     cost = 2
     if st.session_state.mode == "SURVIVAL": cost = 5
     st.session_state.fuel -= cost
 
-    # Loss Check
     if st.session_state.fuel <= 0:
         st.session_state.msg_main = "MISSION FAILED"
         st.session_state.msg_sub = f"HIDDEN TARGET WAS: {st.session_state.target}"
@@ -194,7 +190,6 @@ def scan(guess):
         st.session_state.sound = "error"
         return
 
-    # Feedback
     main, col, snd = get_feedback(guess, st.session_state.target)
     
     if guess < st.session_state.target: sub = "TRY HIGHER ↑"
@@ -242,7 +237,6 @@ if st.session_state.sound:
     play_sound(st.session_state.sound)
     st.session_state.sound = None
 
-# PARTY POPPER TRIGGER
 if st.session_state.trigger_party:
     trigger_party_mode()
     st.session_state.trigger_party = False
@@ -281,14 +275,15 @@ else:
     if st.session_state.fuel > 0 and "RIGHT" not in st.session_state.msg_main:
         st.write("---")
         
-        c_tog1, c_tog2 = st.columns(2)
-        if c_tog1.button("🎚️ SLIDER"): st.session_state.input_type = "SLIDER"
-        if c_tog2.button("⌨️ KEYPAD"): st.session_state.input_type = "KEYPAD"
+        # --- INPUT SWITCHER (RADIO BUTTONS) ---
+        # This is clearer than buttons and persists state better
+        input_mode = st.radio("SELECT INPUT METHOD:", ["🎚️ SLIDER", "⌨️ KEYPAD"], horizontal=True)
+        
         st.write("")
         
         guess = 50
-        if st.session_state.input_type == "SLIDER":
-            # Native Streamlit Slider (No Custom CSS Hacks)
+        if input_mode == "🎚️ SLIDER":
+            # Native Streamlit Slider - No custom CSS to break it
             guess = st.slider("TUNING FREQUENCY", 1, st.session_state.max_val, 50)
         else:
             guess = st.number_input("ENTER COORDINATES", 1, st.session_state.max_val, 50)
