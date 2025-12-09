@@ -4,13 +4,13 @@ import time
 
 # --- PAGE CONFIGURATION ---
 st.set_page_config(
-    page_title="COSMIC COMMAND: DIRECTOR'S CUT",
-    page_icon="🚀",
+    page_title="COSMIC COMMAND: FINAL",
+    page_icon="🛸",
     layout="centered",
     initial_sidebar_state="collapsed"
 )
 
-# --- 1. SOUND ENGINE (WEB) ---
+# --- 1. SOUND ENGINE ---
 def play_sound(sound_type):
     sounds = {
         "scan": "https://www.soundjay.com/buttons/beep-01a.mp3",
@@ -19,20 +19,17 @@ def play_sound(sound_type):
         "ping": "https://www.soundjay.com/buttons/button-30.mp3" 
     }
     if sound_type in sounds:
-        # Invisible audio player
         st.markdown(f"""
             <audio autoplay>
                 <source src="{sounds[sound_type]}" type="audio/mp3">
             </audio>
             """, unsafe_allow_html=True)
 
-# --- 2. ADVANCED CSS (FIXED & POLISHED) ---
+# --- 2. CSS STYLING ---
 st.markdown("""
     <style>
-    /* IMPORT FONTS */
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@500;700&display=swap');
 
-    /* ANIMATED STARFIELD BACKGROUND */
     .stApp {
         background-color: #050508;
         background-image: 
@@ -47,8 +44,7 @@ st.markdown("""
         to { background-position: 1000px 1000px, 1040px 1060px; }
     }
 
-    /* TYPOGRAPHY - TARGETED TO AVOID BREAKING ICONS */
-    h1, h2, h3, h4, .big-font {
+    h1, h2, h3, h4 {
         font-family: 'Orbitron', sans-serif !important;
         text-shadow: 0 0 10px rgba(0, 240, 255, 0.6);
     }
@@ -58,18 +54,22 @@ st.markdown("""
         letter-spacing: 1px;
     }
 
-    /* NEON DISPLAY BOX */
+    /* MAIN DISPLAY BOX */
     .cosmic-display {
         background: linear-gradient(135deg, rgba(10, 10, 20, 0.95), rgba(0, 20, 30, 0.95));
         border: 2px solid #00f0ff;
         border-radius: 15px;
-        padding: 25px;
+        padding: 30px;
         text-align: center;
         margin-bottom: 25px;
-        box-shadow: 0 0 20px rgba(0, 240, 255, 0.15), inset 0 0 20px rgba(0, 240, 255, 0.05);
+        box-shadow: 0 0 20px rgba(0, 240, 255, 0.15);
     }
+    
+    /* SEPARATE LINES FOR FEEDBACK */
+    .status-main { font-size: 36px; margin-bottom: 5px; }
+    .status-sub { font-size: 18px; color: #aaa; letter-spacing: 2px; }
 
-    /* MODE SELECTION CARDS */
+    /* MODE CARDS */
     .mode-card {
         border: 1px solid #333;
         background: rgba(20, 20, 25, 0.8);
@@ -77,11 +77,6 @@ st.markdown("""
         border-radius: 10px;
         text-align: center;
         margin-bottom: 10px;
-        transition: 0.3s;
-    }
-    .mode-card:hover {
-        border-color: #00f0ff;
-        box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
     }
 
     /* CUSTOM BUTTONS */
@@ -91,7 +86,7 @@ st.markdown("""
         border: 1px solid #00f0ff;
         width: 100%;
         border-radius: 4px;
-        padding: 10px;
+        padding: 12px;
         font-size: 16px;
         text-transform: uppercase;
         transition: 0.2s;
@@ -99,20 +94,19 @@ st.markdown("""
     div.stButton > button:hover {
         background: #00f0ff;
         color: #000;
-        font-weight: bold;
         box-shadow: 0 0 15px #00f0ff;
     }
 
-    /* HIDE DEFAULT HEADER/FOOTER */
     #MainMenu, footer, header {visibility: hidden;}
     </style>
     """, unsafe_allow_html=True)
 
-# --- 3. SESSION STATE ---
+# --- 3. STATE INITIALIZATION ---
 if 'game_active' not in st.session_state: st.session_state.game_active = False
 if 'target' not in st.session_state: st.session_state.target = 50
 if 'fuel' not in st.session_state: st.session_state.fuel = 100
-if 'message' not in st.session_state: st.session_state.message = "SYSTEM STANDBY"
+if 'main_msg' not in st.session_state: st.session_state.main_msg = "SYSTEM STANDBY"
+if 'sub_msg' not in st.session_state: st.session_state.sub_msg = "AWAITING INPUT"
 if 'feedback_color' not in st.session_state: st.session_state.feedback_color = "#444"
 if 'input_method' not in st.session_state: st.session_state.input_method = "SLIDER"
 if 'hint_text' not in st.session_state: st.session_state.hint_text = ""
@@ -125,20 +119,14 @@ def start_game(mode):
     st.session_state.game_active = True
     st.session_state.mode = mode
     
-    # Mode Config
-    if mode == "EXPLORATION":
-        st.session_state.max_val = 100
-        drain = 5
-    elif mode == "SURVIVAL":
-        st.session_state.max_val = 100
-        drain = 10
-    elif mode == "QUANTUM":
-        st.session_state.max_val = 150
-        drain = 8
+    if mode == "EXPLORATION": st.session_state.max_val = 100
+    elif mode == "SURVIVAL": st.session_state.max_val = 100
+    elif mode == "QUANTUM": st.session_state.max_val = 150
 
     st.session_state.target = random.randint(1, st.session_state.max_val)
     st.session_state.fuel = 100
-    st.session_state.message = "SCANNER INITIALIZED"
+    st.session_state.main_msg = "SCANNER READY"
+    st.session_state.sub_msg = f"RANGE: 1 - {st.session_state.max_val}"
     st.session_state.feedback_color = "#00f0ff"
     st.session_state.hint_text = ""
     st.session_state.sound_trigger = "scan"
@@ -153,39 +141,42 @@ def get_feedback(guess, target):
     else: return "NO SIGNAL (FAR)", "#bf00ff", "error"
 
 def scan_target(guess):
-    # Suspense Animation
-    with st.spinner("CALCULATING TRAJECTORY..."):
-        time.sleep(0.4) # Small delay for "Juice"
-        
+    # Animation Delay
+    with st.spinner("CALCULATING..."):
+        time.sleep(0.3)
+
+    # Fuel Logic
     drain = 5
     if st.session_state.mode == "SURVIVAL": drain = 10
-    if st.session_state.mode == "QUANTUM": drain = 8
-    
     st.session_state.fuel -= drain
     
-    # Check Win
+    # Win Check
     if guess == st.session_state.target:
-        st.session_state.message = f"TARGET LOCKED: {st.session_state.target}"
+        st.session_state.main_msg = f"TARGET ACQUIRED: {st.session_state.target}"
+        st.session_state.sub_msg = "DECRYPTION SUCCESSFUL"
         st.session_state.feedback_color = "#39ff14"
         st.session_state.sound_trigger = "win"
         st.balloons()
         return
 
-    # Check Loss
+    # Loss Check
     if st.session_state.fuel <= 0:
-        st.session_state.message = f"FAILED. TARGET WAS {st.session_state.target}"
+        st.session_state.main_msg = "MISSION FAILED"
+        st.session_state.sub_msg = f"TARGET LOST AT FREQUENCY {st.session_state.target}"
         st.session_state.feedback_color = "#ff0000"
         st.session_state.sound_trigger = "error"
         return
 
-    # Feedback
-    msg, color, sound = get_feedback(guess, st.session_state.target)
+    # Feedback Logic
+    main_txt, color, sound = get_feedback(guess, st.session_state.target)
     
-    if guess < st.session_state.target: direction = "(TOO LOW)"
-    elif guess > st.session_state.target: direction = "(TOO HIGH)"
-    else: direction = ""
+    # Split Direction into separate clear instruction
+    if guess < st.session_state.target: sub_txt = "📉 TOO LOW -> TUNE UP"
+    elif guess > st.session_state.target: sub_txt = "📈 TOO HIGH -> TUNE DOWN"
+    else: sub_txt = ""
 
-    st.session_state.message = f"{msg} {direction}"
+    st.session_state.main_msg = main_txt
+    st.session_state.sub_msg = sub_txt
     st.session_state.feedback_color = color
     st.session_state.sound_trigger = sound
 
@@ -193,119 +184,97 @@ def buy_intel():
     if st.session_state.fuel >= 15:
         st.session_state.fuel -= 15
         tgt = st.session_state.target
-        low = max(1, tgt - random.randint(5,15))
-        high = min(st.session_state.max_val, tgt + random.randint(5,15))
-        st.session_state.hint_text = f"🤖 INTEL: Target is between {low} and {high}"
+        
+        # Simplified Intel: Parity + Half
+        parity = "EVEN" if tgt % 2 == 0 else "ODD"
+        sector = "1-50" if tgt <= 50 else "51-100"
+        if st.session_state.max_val > 100 and tgt > 100: sector = "101-150"
+        
+        st.session_state.hint_text = f"🤖 INTEL: Number is {parity} & in Sector {sector}"
         st.session_state.sound_trigger = "ping"
     else:
-        st.session_state.hint_text = "❌ ERROR: Insufficient Fuel for Intel"
+        st.session_state.hint_text = "❌ ERROR: Insufficient Fuel"
         st.session_state.sound_trigger = "error"
 
-# --- 5. UI RENDERING ---
+# --- 5. UI RENDER ---
 
-# Trigger Sound
 if st.session_state.sound_trigger:
     play_sound(st.session_state.sound_trigger)
     st.session_state.sound_trigger = None
 
-# Title
 st.markdown("<h1 style='text-align:center; color:#00f0ff;'>COSMIC COMMAND</h1>", unsafe_allow_html=True)
 
 if not st.session_state.game_active:
-    # --- MENU SCREEN (IMPROVED) ---
-    st.markdown("<h3 style='text-align:center; color:#888; margin-bottom: 30px;'>SELECT MISSION PROTOCOL</h3>", unsafe_allow_html=True)
-    
+    # START SCREEN
+    st.markdown("<h3 style='text-align:center; color:#888;'>SELECT DIFFICULTY</h3>", unsafe_allow_html=True)
     c1, c2, c3 = st.columns(3)
-    
     with c1:
-        st.markdown("""
-        <div class='mode-card'>
-            <h3 style='color:#00f0ff'>EXPLORATION</h3>
-            <p style='color:#ccc; font-size:12px;'>Standard Training.<br>Range: 1-100<br>Fuel Drain: Low</p>
-        </div>
-        """, unsafe_allow_html=True)
-        if st.button("LAUNCH ALPHA"): start_game("EXPLORATION")
-
+        st.markdown("<div class='mode-card'><h3 style='color:#00f0ff'>EXPLORE</h3><p style='color:#ccc; font-size:12px;'>Standard<br>1-100</p></div>", unsafe_allow_html=True)
+        if st.button("START"): start_game("EXPLORATION")
     with c2:
-        st.markdown("""
-        <div class='mode-card'>
-            <h3 style='color:#ffaa00'>SURVIVAL</h3>
-            <p style='color:#ccc; font-size:12px;'>High Stakes.<br>Range: 1-100<br>Fuel Drain: HIGH</p>
-        </div>
-        """, unsafe_allow_html=True)
-        if st.button("LAUNCH BETA"): start_game("SURVIVAL")
-
+        st.markdown("<div class='mode-card'><h3 style='color:#ffaa00'>SURVIVAL</h3><p style='color:#ccc; font-size:12px;'>Hard Mode<br>High Drain</p></div>", unsafe_allow_html=True)
+        if st.button("START "): start_game("SURVIVAL")
     with c3:
-        st.markdown("""
-        <div class='mode-card'>
-            <h3 style='color:#bf00ff'>QUANTUM</h3>
-            <p style='color:#ccc; font-size:12px;'>Unstable Physics.<br>Range: 1-150<br>Fuel Drain: Medium</p>
-        </div>
-        """, unsafe_allow_html=True)
-        if st.button("LAUNCH OMEGA"): start_game("QUANTUM")
+        st.markdown("<div class='mode-card'><h3 style='color:#bf00ff'>QUANTUM</h3><p style='color:#ccc; font-size:12px;'>Chaos<br>1-150</p></div>", unsafe_allow_html=True)
+        if st.button("START  "): start_game("QUANTUM")
 
 else:
-    # --- GAME SCREEN ---
+    # MAIN GAME
     
-    # 1. Main Monitor
+    # 1. Clean Display (Split Text)
     st.markdown(f"""
     <div class='cosmic-display' style='border-color: {st.session_state.feedback_color};'>
-        <h4 style='color: #888; margin: 0; font-size: 14px; letter-spacing: 2px;'>SIGNAL MONITOR</h4>
-        <h2 style='color: {st.session_state.feedback_color}; font-size: 36px; margin: 10px 0;'>
-            {st.session_state.message}
-        </h2>
+        <div class='status-main' style='color: {st.session_state.feedback_color};'>
+            {st.session_state.main_msg}
+        </div>
+        <div class='status-sub'>
+            {st.session_state.sub_msg}
+        </div>
     </div>
     """, unsafe_allow_html=True)
 
-    # 2. Status Bar
+    # 2. Fuel
     fuel_pct = max(0, st.session_state.fuel) / 100.0
     st.progress(fuel_pct)
-    c_stat1, c_stat2 = st.columns([1, 1])
-    with c_stat1:
-        st.caption(f"🔋 HYPERFUEL: {max(0, st.session_state.fuel)}%")
-    with c_stat2:
-        st.caption(f"📡 MODE: {st.session_state.mode}")
-    
-    # 3. Game Controls (Only if alive)
-    if st.session_state.fuel > 0 and "LOCKED" not in st.session_state.message:
-        st.write("---")
-        
-        # Centering Layout using Columns
-        c_pad1, c_main, c_pad2 = st.columns([1, 3, 1])
-        
-        with c_main:
-            # Input Switcher
-            tabs = st.tabs(["🎚️ SLIDER", "⌨️ KEYPAD"])
-            
-            with tabs[0]:
-                guess_slider = st.slider("FREQUENCY TUNER", 1, st.session_state.max_val, 50)
-                if st.button("INITIATE SCAN (SLIDER)", type="primary"):
-                    scan_target(guess_slider)
-            
-            with tabs[1]:
-                guess_key = st.number_input("ENTER COORDINATES", 1, st.session_state.max_val, 50)
-                if st.button("INITIATE SCAN (KEYPAD)", type="primary"):
-                    scan_target(guess_key)
+    st.caption(f"HYPERFUEL: {max(0, st.session_state.fuel)}%")
 
+    # 3. Game Controls
+    if st.session_state.fuel > 0 and "ACQUIRED" not in st.session_state.main_msg:
         st.write("---")
         
-        # Bottom Actions
-        c_b1, c_b2 = st.columns(2)
-        with c_b1:
-            if st.button("💰 BUY INTEL (-15)"):
+        # Toggle Input Method
+        c_tog1, c_tog2 = st.columns(2)
+        if c_tog1.button("🎚️ USE SLIDER"): st.session_state.input_method = "SLIDER"
+        if c_tog2.button("⌨️ USE KEYPAD"): st.session_state.input_method = "KEYPAD"
+
+        # Render ONLY the active input to prevent bugs
+        guess = 50
+        if st.session_state.input_method == "SLIDER":
+            guess = st.slider("FREQUENCY", 1, st.session_state.max_val, 50, key="slider_input")
+        else:
+            guess = st.number_input("ENTER COORDINATES", 1, st.session_state.max_val, 50, key="keypad_input")
+        
+        # Action Buttons
+        c_act1, c_act2 = st.columns([2, 1])
+        with c_act1:
+            if st.button("INITIATE SCAN", type="primary"):
+                scan_target(guess)
+        with c_act2:
+            if st.button("BUY INTEL (-15)"):
                 buy_intel()
-        with c_b2:
-            if st.button("🛑 ABORT MISSION"):
-                st.session_state.game_active = False
-                st.rerun()
 
-        # Hints
+        # Intel/Error Messages
         if st.session_state.hint_text:
-            st.warning(st.session_state.hint_text)
+            st.info(st.session_state.hint_text)
+            
+        st.write("")
+        if st.button("🛑 ABORT MISSION"):
+            st.session_state.game_active = False
+            st.rerun()
             
     else:
         # Game Over / Restart
         st.write("---")
-        if st.button("🔄 REBOOT SYSTEM (PLAY AGAIN)"):
+        if st.button("🔄 REBOOT SYSTEM"):
             st.session_state.game_active = False
             st.rerun()
