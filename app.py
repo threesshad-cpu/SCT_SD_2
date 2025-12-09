@@ -8,11 +8,11 @@ st.set_page_config(
     page_title="COSMIC COMMAND",
     page_icon="🚀",
     layout="centered",
-    # "collapsed" makes the sidebar hidden until you click the arrow to slide it out
-    initial_sidebar_state="collapsed" 
+    # FORCE SIDEBAR TO BE OPEN BY DEFAULT
+    initial_sidebar_state="expanded" 
 )
 
-# --- 1. JAVASCRIPT PARTY POPPER ---
+# --- 1. PARTY POPPER (JAVASCRIPT) ---
 def trigger_party():
     components.html(
         """
@@ -36,8 +36,7 @@ def trigger_party():
 
 # --- 2. SOUND ENGINE ---
 def play_sound(sound_name):
-    # Check the toggle state from the sidebar
-    if not st.session_state.get('sound_enabled', True): return
+    if not st.session_state.get('sound_on', True): return
 
     sounds = {
         "start": "https://www.soundjay.com/buttons/button-10.mp3",
@@ -51,7 +50,7 @@ def play_sound(sound_name):
             </audio>
             """, unsafe_allow_html=True)
 
-# --- 3. CSS STYLING ---
+# --- 3. CSS (SAFE MODE) ---
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@500;700&display=swap');
@@ -65,20 +64,14 @@ st.markdown("""
         background-size: 550px 550px, 350px 350px;
     }
 
-    /* SIDEBAR STYLING */
-    section[data-testid="stSidebar"] {
-        background-color: #0a0a10;
-        border-right: 1px solid #00f0ff;
-    }
-
-    /* NEON TEXT HEADERS */
+    /* NEON HEADERS */
     h1, h2, h3 { 
         font-family: 'Orbitron', sans-serif !important; 
         color: #00f0ff !important;
         text-shadow: 0 0 10px rgba(0, 240, 255, 0.6); 
     }
     
-    /* GAME DISPLAY BOX */
+    /* DISPLAY BOX */
     .cosmic-display {
         background: rgba(20, 20, 30, 0.9);
         border: 2px solid #00f0ff;
@@ -97,7 +90,7 @@ st.markdown("""
         text-shadow: 0 0 20px #39ff14;
     }
 
-    /* HIDE HEADER/FOOTER */
+    /* REMOVING HEADER/FOOTER BUT KEEPING WIDGETS VISIBLE */
     #MainMenu, footer, header {visibility: hidden;}
     </style>
     """, unsafe_allow_html=True)
@@ -113,10 +106,10 @@ if 'intel_txt' not in st.session_state: st.session_state.intel_txt = ""
 if 'sound' not in st.session_state: st.session_state.sound = None
 if 'mode' not in st.session_state: st.session_state.mode = "EXPLORATION"
 if 'max_val' not in st.session_state: st.session_state.max_val = 100
-if 'sound_enabled' not in st.session_state: st.session_state.sound_enabled = True
+if 'sound_on' not in st.session_state: st.session_state.sound_on = True
 if 'trigger_party' not in st.session_state: st.session_state.trigger_party = False
 
-# --- 5. GAME FUNCTIONS ---
+# --- 5. LOGIC ---
 def start_game(mode):
     st.session_state.game_active = True
     st.session_state.mode = mode
@@ -190,33 +183,24 @@ def buy_intel():
 
 # --- 6. LAYOUT ---
 
-# --- THE "OPTION SLIDER" (SIDEBAR) ---
-# This is the menu sliding from the left
+# --- SIDEBAR MENU ---
+# This code creates the left-side menu
 with st.sidebar:
-    st.header("⚙️ OPTIONS")
-    
-    # SOUND TOGGLE
-    st.session_state.sound_enabled = st.toggle("🔊 Sound Effects", value=True)
+    st.header("⚙️ SETTINGS")
+    st.session_state.sound_on = st.checkbox("Enable Sounds", value=True)
     
     st.write("---")
-    
-    # RESTART
     if st.button("🔄 RESTART GAME", use_container_width=True):
         st.session_state.game_active = False
         st.session_state.sound = "start"
         st.rerun()
 
-    # INSTRUCTION PANEL
-    st.header("📝 INSTRUCTIONS")
+    st.header("📝 HOW TO PLAY")
     st.info("""
-    **OBJECTIVE:** Find the secret number.
-    
-    1. **Scan:** Use the main slider or keypad.
-    2. **Signals:**
-       - 🔴 **Hot:** Very close.
-       - 🔵 **Cold:** Far away.
-    3. **Fuel:** Scans cost fuel. Don't run out!
-    4. **Win:** Unlock the target to celebrate!
+    1. **Objective:** Find the hidden number.
+    2. **Scan:** Use the slider or keypad.
+    3. **Fuel:** Every scan costs fuel.
+    4. **Win:** Find the exact number!
     """)
 
 # --- MAIN GAME SCREEN ---
@@ -267,9 +251,10 @@ else:
         
         st.write("")
         
-        # GAME INPUT SLIDER
+        # --- THE SLIDER ---
         guess = 50
         if input_mode == "SLIDER":
+            # This is the standard Streamlit slider. It MUST appear.
             guess = st.slider("TUNING FREQUENCY", 1, st.session_state.max_val, 50)
         else:
             guess = st.number_input("ENTER COORDINATES", 1, st.session_state.max_val, 50)
