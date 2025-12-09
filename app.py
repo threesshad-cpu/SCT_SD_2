@@ -163,11 +163,11 @@ if st.session_state.page == "HOME":
         st.markdown("""
         **OBJECTIVE:** Locate the hidden frequency target (1-100).
         
-        **1. 📡 SCAN:** Use the slider or buttons to choose a frequency and click **INITIATE SCAN**.
-        **2. 🌡️ FEEDBACK:** - **HOT/RED:** You are very close to the target.
-           - **COLD/BLUE:** You are far away.
-           - **INTEL:** The system will tell you if the target is HIGHER ⬆️ or LOWER ⬇️.
-        **3. ⛽ FUEL:** Every scan costs fuel. If fuel hits 0%, mission failed.
+        **1. 📡 SCAN:** Use the slider or buttons to choose a frequency and click **INITIATE SCAN**.\n
+        **2. 🌡️ FEEDBACK:** - **HOT/RED:** You are very close to the target.\n
+           - **COLD/BLUE:** You are far away.\n
+           - **INTEL:** The system will tell you if the target is HIGHER ⬆️ or LOWER ⬇️.\n
+        **3. ⛽ FUEL:** Every scan costs fuel. If fuel hits 0%, mission failed.\n
         """)
     
     st.write("---")
