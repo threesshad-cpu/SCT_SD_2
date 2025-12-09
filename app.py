@@ -8,10 +8,11 @@ st.set_page_config(
     page_title="COSMIC COMMAND",
     page_icon="🚀",
     layout="centered",
-    initial_sidebar_state="expanded"
+    # "collapsed" makes the sidebar hidden until you click the arrow to slide it out
+    initial_sidebar_state="collapsed" 
 )
 
-# --- 1. PARTY POPPER (JAVASCRIPT) ---
+# --- 1. JAVASCRIPT PARTY POPPER ---
 def trigger_party():
     components.html(
         """
@@ -36,8 +37,7 @@ def trigger_party():
 # --- 2. SOUND ENGINE ---
 def play_sound(sound_name):
     # Check the toggle state from the sidebar
-    if not st.session_state.get('sound_enabled', True): 
-        return
+    if not st.session_state.get('sound_enabled', True): return
 
     sounds = {
         "start": "https://www.soundjay.com/buttons/button-10.mp3",
@@ -65,22 +65,27 @@ st.markdown("""
         background-size: 550px 550px, 350px 350px;
     }
 
+    /* SIDEBAR STYLING */
+    section[data-testid="stSidebar"] {
+        background-color: #0a0a10;
+        border-right: 1px solid #00f0ff;
+    }
+
     /* NEON TEXT HEADERS */
     h1, h2, h3 { 
         font-family: 'Orbitron', sans-serif !important; 
-        color: #87CEFA !important; /* Light Blue Title */
-        text-shadow: 0 0 10px rgba(135, 206, 250, 0.6); 
+        color: #00f0ff !important;
+        text-shadow: 0 0 10px rgba(0, 240, 255, 0.6); 
     }
     
     /* GAME DISPLAY BOX */
     .cosmic-display {
         background: rgba(20, 20, 30, 0.9);
-        border: 2px solid #87CEFA; /* Light Blue Border */
+        border: 2px solid #00f0ff;
         border-radius: 10px;
         padding: 20px;
         text-align: center;
         margin-bottom: 20px;
-        box-shadow: 0 0 15px rgba(135, 206, 250, 0.2);
     }
     
     /* WINNER TEXT */
@@ -97,13 +102,13 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- 4. SESSION STATE SETUP ---
+# --- 4. SESSION STATE ---
 if 'game_active' not in st.session_state: st.session_state.game_active = False
 if 'target' not in st.session_state: st.session_state.target = 50
 if 'fuel' not in st.session_state: st.session_state.fuel = 100
 if 'msg_main' not in st.session_state: st.session_state.msg_main = "SYSTEM ONLINE"
 if 'msg_sub' not in st.session_state: st.session_state.msg_sub = "READY TO START"
-if 'color' not in st.session_state: st.session_state.color = "#87CEFA"
+if 'color' not in st.session_state: st.session_state.color = "#00f0ff"
 if 'intel_txt' not in st.session_state: st.session_state.intel_txt = ""
 if 'sound' not in st.session_state: st.session_state.sound = None
 if 'mode' not in st.session_state: st.session_state.mode = "EXPLORATION"
@@ -124,7 +129,7 @@ def start_game(mode):
     st.session_state.fuel = 100
     st.session_state.msg_main = "SCANNER INITIALIZED"
     st.session_state.msg_sub = "ENTER FREQUENCY"
-    st.session_state.color = "#87CEFA"
+    st.session_state.color = "#00f0ff"
     st.session_state.intel_txt = ""
     st.session_state.sound = "start"
     st.session_state.trigger_party = False
@@ -139,7 +144,6 @@ def get_feedback(guess, target):
     else: return "NO SIGNAL (FAR)", "#bf00ff", "error"
 
 def scan(guess):
-    # INSTANT WIN CHECK
     if guess == st.session_state.target:
         st.session_state.msg_main = "YOU GUESSED IT RIGHT!"
         st.session_state.msg_sub = f"TARGET LOCKED: {st.session_state.target} // EXCELLENT WORK"
@@ -148,16 +152,13 @@ def scan(guess):
         st.session_state.trigger_party = True
         return
 
-    # ANIMATION DELAY
     with st.spinner("SCANNING..."):
         time.sleep(0.15) 
 
-    # FUEL COST
     cost = 2
     if st.session_state.mode == "SURVIVAL": cost = 5
     st.session_state.fuel -= cost
 
-    # LOSS CHECK
     if st.session_state.fuel <= 0:
         st.session_state.msg_main = "MISSION FAILED"
         st.session_state.msg_sub = f"HIDDEN TARGET WAS: {st.session_state.target}"
@@ -165,7 +166,6 @@ def scan(guess):
         st.session_state.sound = "error"
         return
 
-    # FEEDBACK
     main, col, snd = get_feedback(guess, st.session_state.target)
     
     if guess < st.session_state.target: sub = "TRY HIGHER ↑"
@@ -190,9 +190,10 @@ def buy_intel():
 
 # --- 6. LAYOUT ---
 
-# --- SIDEBAR MENU ---
+# --- THE "OPTION SLIDER" (SIDEBAR) ---
+# This is the menu sliding from the left
 with st.sidebar:
-    st.header("⚙️ SETTINGS")
+    st.header("⚙️ OPTIONS")
     
     # SOUND TOGGLE
     st.session_state.sound_enabled = st.toggle("🔊 Sound Effects", value=True)
@@ -205,27 +206,25 @@ with st.sidebar:
         st.session_state.sound = "start"
         st.rerun()
 
-    # INSTRUCTIONS
-    st.header("📝 HOW TO PLAY")
+    # INSTRUCTION PANEL
+    st.header("📝 INSTRUCTIONS")
     st.info("""
-    **OBJECTIVE:** Find the secret number before fuel runs out.
+    **OBJECTIVE:** Find the secret number.
     
-    1. **Scan Frequencies:** Use the Light Blue Slider or Keypad to guess.
-    2. **Read Signals:**
-       - 🔴 **Hot:** You are very close!
-       - 🔵 **Cold:** You are far away.
-    3. **Watch Fuel:** Every scan costs fuel.
+    1. **Scan:** Use the main slider or keypad.
+    2. **Signals:**
+       - 🔴 **Hot:** Very close.
+       - 🔵 **Cold:** Far away.
+    3. **Fuel:** Scans cost fuel. Don't run out!
     4. **Win:** Unlock the target to celebrate!
     """)
 
 # --- MAIN GAME SCREEN ---
 
-# Play sound if triggered
 if st.session_state.sound:
     play_sound(st.session_state.sound)
     st.session_state.sound = None
 
-# Trigger Confetti if won
 if st.session_state.trigger_party:
     trigger_party()
     st.session_state.trigger_party = False
@@ -233,7 +232,6 @@ if st.session_state.trigger_party:
 st.title("COSMIC COMMAND")
 
 if not st.session_state.game_active:
-    # --- START SCREEN ---
     st.subheader("SELECT DIFFICULTY")
     c1, c2, c3 = st.columns(3)
     if c1.button("EXPLORE (EASY)", use_container_width=True): start_game("EXPLORATION")
@@ -241,11 +239,8 @@ if not st.session_state.game_active:
     if c3.button("QUANTUM (CHAOS)", use_container_width=True): start_game("QUANTUM")
 
 else:
-    # --- GAME SCREEN ---
-    
-    # 1. DISPLAY BOX
+    # DISPLAY
     if "RIGHT" in st.session_state.msg_main:
-        # WINNER STYLE
         st.markdown(f"""
         <div class='cosmic-display' style='border-color: #39ff14; box-shadow: 0 0 30px #39ff14;'>
             <div class='winner-text'>{st.session_state.msg_main}</div>
@@ -253,7 +248,6 @@ else:
         </div>
         """, unsafe_allow_html=True)
     else:
-        # NORMAL STYLE
         st.markdown(f"""
         <div class='cosmic-display' style='border-color: {st.session_state.color};'>
             <h2 style='color: {st.session_state.color}; margin:0;'>{st.session_state.msg_main}</h2>
@@ -261,22 +255,19 @@ else:
         </div>
         """, unsafe_allow_html=True)
 
-    # 2. FUEL BAR
+    # FUEL
     st.progress(max(0, st.session_state.fuel) / 100.0)
     st.caption(f"HYPERFUEL: {max(0, st.session_state.fuel)}%")
 
-    # 3. CONTROLS
     if st.session_state.fuel > 0 and "RIGHT" not in st.session_state.msg_main:
         st.write("---")
         
-        # INPUT TYPE SELECTION
+        # INPUT SWITCHER
         input_mode = st.radio("SELECT INPUT:", ["SLIDER", "KEYPAD"], horizontal=True)
         
         st.write("")
         
-        # THE SLIDER (Standard Streamlit Widget)
-        # Note: We cannot change the slider track color easily in Python without breaking it,
-        # but the surrounding UI is now Light Blue theme.
+        # GAME INPUT SLIDER
         guess = 50
         if input_mode == "SLIDER":
             guess = st.slider("TUNING FREQUENCY", 1, st.session_state.max_val, 50)
@@ -285,7 +276,7 @@ else:
 
         st.write("")
         
-        # ACTION BUTTONS
+        # BUTTONS
         col1, col2 = st.columns([2, 1])
         with col1:
             if st.button("INITIATE SCAN", type="primary", use_container_width=True):
@@ -299,7 +290,6 @@ else:
             st.info(st.session_state.intel_txt)
             
     else:
-        # RESTART BUTTON
         st.write("---")
         if st.button("🔄 PLAY AGAIN", type="primary", use_container_width=True):
             st.session_state.game_active = False
