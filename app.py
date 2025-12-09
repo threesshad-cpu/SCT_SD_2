@@ -11,39 +11,30 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- 1. STABLE CONFETTI ENGINE (JAVASCRIPT) ---
+# --- 1. STABLE PARTY POPPER ENGINE (JAVASCRIPT) ---
 def trigger_party_mode():
-    # This injects a professional "Party Popper" animation script
-    # It is invisible and will not cause text glitches
+    # This uses a professional library to blast confetti without glitches
     components.html(
         """
         <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
         <script>
-            // Party Popper Effect
             var duration = 3 * 1000;
             var animationEnd = Date.now() + duration;
             var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 9999 };
 
-            function randomInOut(min, max) {
-              return Math.random() * (max - min) + min;
-            }
+            function randomInOut(min, max) { return Math.random() * (max - min) + min; }
 
             var interval = setInterval(function() {
               var timeLeft = animationEnd - Date.now();
-
-              if (timeLeft <= 0) {
-                return clearInterval(interval);
-              }
-
+              if (timeLeft <= 0) { return clearInterval(interval); }
+              
               var particleCount = 50 * (timeLeft / duration);
-              // Since particles fall down, start a bit higher than random
               confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInOut(0.1, 0.3), y: Math.random() - 0.2 } }));
               confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInOut(0.7, 0.9), y: Math.random() - 0.2 } }));
             }, 250);
         </script>
         """,
-        height=0, # Keeps it invisible in layout
-        width=0
+        height=0, width=0 # Invisible container
     )
 
 # --- 2. SOUND ENGINE ---
@@ -51,9 +42,9 @@ def play_sound(sound_type):
     if not st.session_state.get('sound_on', True): return
 
     sounds = {
-        "start": "https://www.soundjay.com/buttons/button-10.mp3",
-        "win": "https://www.soundjay.com/misc/success-bell-01.mp3",
-        "error": "https://www.soundjay.com/buttons/button-42.mp3"
+        "start": "https://www.soundjay.com/buttons/button-10.mp3", # Initiating
+        "win": "https://www.soundjay.com/misc/success-bell-01.mp3", # Excellent/Unlocked
+        "error": "https://www.soundjay.com/buttons/button-42.mp3"   # Fail
     }
     if sound_type in sounds:
         st.markdown(f"""
@@ -62,7 +53,7 @@ def play_sound(sound_type):
             </audio>
             """, unsafe_allow_html=True)
 
-# --- 3. CSS STYLING ---
+# --- 3. CSS STYLING (GLITCH FIX) ---
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@500;700&display=swap');
@@ -85,6 +76,12 @@ st.markdown("""
     h1, h2, h3 { font-family: 'Orbitron', sans-serif !important; text-shadow: 0 0 10px rgba(0, 240, 255, 0.6); }
     div, p, button, span, li { font-family: 'Rajdhani', sans-serif !important; font-weight: 700; letter-spacing: 1px; }
 
+    /* --- FIX FOR THE TEXT GLITCH --- */
+    /* This forces icons to use the correct symbol font instead of your custom font */
+    .material-icons, .st-emotion-cache-1pbqdg3, .st-emotion-cache-10trblm, i {
+        font-family: sans-serif !important; 
+    }
+
     /* NEON DISPLAY */
     .cosmic-display {
         background: linear-gradient(135deg, rgba(10, 10, 20, 0.95), rgba(0, 20, 30, 0.95));
@@ -99,7 +96,7 @@ st.markdown("""
     /* WINNER TEXT */
     .winner-text {
         color: #39ff14 !important;
-        font-size: 45px !important;
+        font-size: 42px !important;
         font-weight: 900 !important;
         text-shadow: 0 0 20px #39ff14;
         animation: pulse 0.5s infinite;
@@ -127,7 +124,7 @@ st.markdown("""
         box-shadow: 0 0 20px #00f0ff;
     }
 
-    /* SLIDER FIX */
+    /* SLIDER VISIBILITY FIX */
     div[data-testid="stThumbValue"] { font-family: 'Rajdhani', sans-serif !important; font-size: 14px; }
     div[role="slider"] { background-color: #00f0ff !important; border: 2px solid white; height: 20px; width: 20px; }
     
@@ -161,7 +158,7 @@ def start_game(mode):
 
     st.session_state.target = random.randint(1, st.session_state.max_val)
     st.session_state.fuel = 100
-    st.session_state.msg_main = "SCANNER INITIALIZED"
+    st.session_state.msg_main = "INITIATING..."
     st.session_state.msg_sub = "ENTER FREQUENCY"
     st.session_state.color = "#00f0ff"
     st.session_state.intel_txt = ""
@@ -170,7 +167,7 @@ def start_game(mode):
 
 def get_feedback(guess, target):
     diff = abs(target - guess)
-    if diff == 0: return "YOU GUESSED IT RIGHT!", "#39ff14", "win"
+    if diff == 0: return "EXCELLENT!", "#39ff14", "win"
     elif diff <= 4: return "CRITICAL (BURNING HOT!!)", "#ff073a", "scan"
     elif diff <= 12: return "VERY CLOSE (HOT)", "#ff4500", "scan"
     elif diff <= 25: return "SIGNAL DETECTED (WARM)", "#ffd700", "scan"
@@ -180,11 +177,11 @@ def get_feedback(guess, target):
 def scan(guess):
     # INSTANT WIN CHECK
     if guess == st.session_state.target:
-        st.session_state.msg_main = "YOU GUESSED IT RIGHT!"
-        st.session_state.msg_sub = f"TARGET LOCKED: {st.session_state.target} // EXCELLENT WORK"
+        st.session_state.msg_main = "TARGET UNLOCKED!"
+        st.session_state.msg_sub = f"EXCELLENT WORK. NUMBER WAS {st.session_state.target}"
         st.session_state.color = "#39ff14"
         st.session_state.sound = "win"
-        st.session_state.trigger_party = True # Trigger JavaScript Confetti
+        st.session_state.trigger_party = True
         return
 
     # Delay only on non-wins
@@ -214,7 +211,7 @@ def scan(guess):
     st.session_state.msg_main = main
     st.session_state.msg_sub = sub
     st.session_state.color = col
-    # No scan sound requested, only win/error
+    # No sound on normal scans
 
 def buy_intel():
     if st.session_state.fuel >= 10:
@@ -230,7 +227,7 @@ def buy_intel():
 
 # --- 6. UI RENDERING ---
 
-# SIDEBAR
+# SIDEBAR (Clear Mission Brief)
 with st.sidebar:
     st.markdown("## 🚀 MENU")
     st.session_state.sound_on = st.toggle("🔊 SOUNDS", value=True)
@@ -240,15 +237,14 @@ with st.sidebar:
         st.session_state.sound = "start"
         st.rerun()
 
-    st.markdown("### 📝 MISSION INSTRUCTIONS")
+    st.markdown("### 📝 MISSION BRIEF")
     st.info("""
-    1. **Objective:** Find the hidden number.
-    2. **Scan Frequencies:** Use the slider or keypad to guess.
-    3. **Interpret Signals:**
-       - 🔴 **Hot:** You are very close!
-       - 🔵 **Cold:** You are far away.
-    4. **Watch Fuel:** Each scan costs 2% fuel.
-    5. **Win:** Unlock the target before fuel runs out!
+    **OBJECTIVE:** Find the hidden number before you run out of fuel.
+    
+    **INSTRUCTIONS:**
+    1. **Scan:** Use the slider/keypad to guess.
+    2. **Feedback:** "Hot" means close, "Cold" means far.
+    3. **Win:** Get "Target Unlocked!"
     """)
 
 # MAIN SCREEN
@@ -273,10 +269,10 @@ if not st.session_state.game_active:
 
 else:
     # GAME SCREEN
-    if "RIGHT" in st.session_state.msg_main:
+    if "UNLOCKED" in st.session_state.msg_main:
         st.markdown(f"""
         <div class='cosmic-display' style='border-color: #39ff14; box-shadow: 0 0 40px #39ff14;'>
-            <div class='winner-text'>{st.session_state.msg_main}</div>
+            <div class='winner-text'>YOU GUESSED IT RIGHT!</div>
             <div style='color: #fff; letter-spacing: 2px; margin-top: 10px; font-size: 20px;'>{st.session_state.msg_sub}</div>
         </div>
         """, unsafe_allow_html=True)
@@ -292,7 +288,7 @@ else:
     st.progress(fuel_pct)
     st.caption(f"HYPERFUEL: {max(0, st.session_state.fuel)}%")
 
-    if st.session_state.fuel > 0 and "RIGHT" not in st.session_state.msg_main:
+    if st.session_state.fuel > 0 and "UNLOCKED" not in st.session_state.msg_main:
         st.write("---")
         
         c_tog1, c_tog2 = st.columns(2)
