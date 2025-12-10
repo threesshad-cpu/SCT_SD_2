@@ -89,9 +89,8 @@ Streamlit allows for the creation of interactive, data-driven web apps entirely 
 ## 🚀 Installation & Setup
 
 Follow these steps to deploy the mission control center on your local machine.
-
-**1. Clone the Repository**
 ```bash
+**1. Clone the Repository**
 git clone [https://github.com/YOUR_USERNAME/cosmic-command.git](https://github.com/YOUR_USERNAME/cosmic-command.git)
 cd cosmic-command
 2. Create a Virtual Environment (Optional but Recommended)
@@ -131,10 +130,8 @@ cosmic-command/
 🤝 Credits
 Developer: Threessha D
 
-Role: Python Development Intern
+Role: Software Development Intern
 
 Organization: SkillCraft Technology
 
 Project ID: SCT_SD_2
-
-Built with ❤️, Python, and a lot of coffee.
