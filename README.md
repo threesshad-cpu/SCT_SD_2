@@ -89,49 +89,45 @@ Streamlit allows for the creation of interactive, data-driven web apps entirely 
 ## 🚀 Installation & Setup
 
 Follow these steps to deploy the mission control center on your local machine.
-```bash
+
 1. Clone the Repository
-git clone [https://github.com/threesshad-cpu/cosmic-command.git](https://github.com/threesshad-cpu/cosmic-command.git)
-cd cosmic-command
+```bash
+   git clone [https://github.com/threesshad-cpu/cosmic-command.git](https://github.com/threesshad-cpu/cosmic-command.git)
+   cd cosmic-command
+```
 2. Create a Virtual Environment (Optional but Recommended)
 
-Bash
-
-python -m venv venv
-# Windows:
-venv\Scripts\activate
-# Mac/Linux:
-source venv/bin/activate
+```Bash
+   python -m venv venv
+   # Windows:
+   venv\Scripts\activate
+   # Mac/Linux:
+   source venv/bin/activate
+```
 3. Install Dependencies
 
-Bash
+```Bash
 
-pip install -r requirements.txt
+   pip install -r requirements.txt
+```
 4. Launch the Application
 
-Bash
+```Bash
 
-streamlit run main.py
-📂 Project Structure
-Plaintext
+   streamlit run main.py
+```
+## Deployment Link: https://guessing-game-task-02.streamlit.app/
 
-cosmic-command/
-├── main.py                # Core application entry point
-├── requirements.txt       # Python dependencies
-├── README.md              # Documentation
-└── assets/                # (Optional) Static images or icons
-🔮 Future Roadmap
-[ ] Global Leaderboard: Integrate a database (Firebase/SQLite) to track high scores across all players.
+## 🔮 Future Roadmap
+* **Global Leaderboard:** Integrate a database (Firebase/SQLite) to track high scores across all players.
 
-[ ] Time Attack Mode: Find the target in under 30 seconds.
+* **Time Attack Mode:** Find the target in under 30 seconds.
 
-[ ] AI Opponent: A CPU "rival" that tries to find the number faster than you.
+* **AI Opponent:** A CPU "rival" that tries to find the number faster than you.
 
-🤝 Credits
-Developer: Threessha D
 
-Role: Software Development Intern
-
-Organization: SkillCraft Technology
-
-Project ID: SCT_SD_2
+## 🤝 Credits
+* **Developer:** Threessha D
+* **Role:** Software Development Intern
+* **Organization:** SkillCraft Technology
+* **Project ID:** SCT_SD_2
